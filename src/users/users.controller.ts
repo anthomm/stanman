@@ -3,6 +3,7 @@ import {
   Controller,
   Delete,
   Get,
+  NotFoundException,
   Param,
   Patch,
   Post,
@@ -11,7 +12,10 @@ import {
 import { CreateUserDto } from './dtos/create-user.dto';
 import { UsersService } from './users.service';
 import { UpdateUserDto } from './dtos/update-user.dto';
+import { Serialize } from '../interceptors/serialize.interceptor';
+import { UserDto } from './dtos/user.dto';
 
+@Serialize(UserDto)
 @Controller('auth')
 export class UsersController {
   constructor(private usersService: UsersService) {}
@@ -23,9 +27,13 @@ export class UsersController {
   }
 
   @Get('/:id')
-  findUser(@Param('id') id: string) {
+  async findUser(@Param('id') id: string) {
     const pid = parseInt(id);
-    return this.usersService.findOne(pid);
+    const user = await this.usersService.findOne(pid);
+    if (!user) {
+      throw new NotFoundException(`User Not Found: ${id}`);
+    }
+    return user;
   }
 
   @Get()
